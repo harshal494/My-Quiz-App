@@ -6,105 +6,105 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
-  Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
+import Toast from "react-native-toast-message";
 
-const isWeb = Platform.OS === "web";
-const storage = {
-  setItem: async (k: string, v: string) =>
-    isWeb ? Promise.resolve(window.localStorage.setItem(k, v)) : AsyncStorage.setItem(k, v),
-};
-
-export default function RegisterScreen() {
+export default function Register() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState(""); // email or phone
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || !password || !confirm) {
-      setError("All fields are required.");
+    if (!username || !identifier || !password || !confirm) {
+      Toast.show({
+        type: "error",
+        text1: "Missing fields",
+        text2: "Please fill all details",
+      });
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      Toast.show({
+        type: "error",
+        text1: "Password mismatch",
+        text2: "Confirm password must match",
+      });
       return;
     }
+
     setLoading(true);
     setTimeout(async () => {
-      const user = { name, email: email.trim().toLowerCase(), password };
-      await storage.setItem("user", JSON.stringify(user));
-      await storage.setItem("loggedIn", "true");
+      const user = { username, identifier, password };
+      await AsyncStorage.setItem("user", JSON.stringify(user));
       setLoading(false);
-      router.replace("/home");
-    }, 900);
+
+      Toast.show({
+        type: "success",
+        text1: "Registration successful 🎉",
+        text2: "Please login now",
+      });
+
+      setTimeout(() => router.replace("/"), 1000);
+    }, 1000);
   };
 
-  const webBlurStyle = isWeb ? { backdropFilter: "blur(12px)" } : {};
-
   return (
-    <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.gradient}>
+    <LinearGradient colors={["#667eea", "#764ba2"]} style={{ flex: 1 }}>
       <View style={styles.wrapper}>
-        <View style={[styles.card, webBlurStyle]}>
+        <View style={styles.card}>
           <Text style={styles.title}>Register</Text>
-          <Text style={styles.subtitle}>Create a new account</Text>
 
           <TextInput
-            placeholder="Full Name"
-            placeholderTextColor="rgba(0,0,0,0.5)"
+            placeholder="Username"
+            placeholderTextColor="#444"
             style={styles.input}
-            value={name}
-            onChangeText={setName}
+            value={username}
+            onChangeText={setUsername}
           />
+
           <TextInput
-            placeholder="Email"
-            placeholderTextColor="rgba(0,0,0,0.5)"
+            placeholder="Email / Mobile"
+            placeholderTextColor="#444"
             style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
+            value={identifier}
+            onChangeText={setIdentifier}
           />
+
           <TextInput
             placeholder="Password"
-            placeholderTextColor="rgba(0,0,0,0.5)"
+            placeholderTextColor="#444"
             style={styles.input}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
+
           <TextInput
             placeholder="Confirm Password"
-            placeholderTextColor="rgba(0,0,0,0.5)"
+            placeholderTextColor="#444"
             style={styles.input}
             secureTextEntry
             value={confirm}
             onChangeText={setConfirm}
           />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
           {loading ? (
-            <ActivityIndicator size="large" color="#333" style={{ marginVertical: 12 }} />
+            <ActivityIndicator size="large" color="#333" />
           ) : (
             <Pressable onPress={handleRegister} style={styles.primaryBtn}>
-              <Text style={styles.primaryText}>Create Account</Text>
+              <Text style={styles.primaryText}>Register</Text>
             </Pressable>
           )}
 
           <Pressable onPress={() => router.replace("/")} style={styles.linkBtn}>
-            <Text style={styles.link}>Already have an account? Login here</Text>
+            <Text style={styles.link}>Already a user? Login</Text>
           </Pressable>
-        </View>
-
-        {/* 📢 Google Ads Placeholder */}
-        <View style={styles.adBox}>
-          <Text style={styles.adText}>[ Your Ad Here ]</Text>
         </View>
       </View>
     </LinearGradient>
@@ -112,7 +112,6 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
   wrapper: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   card: {
     width: "90%",
@@ -120,13 +119,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.75)",
     padding: 25,
     borderRadius: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
   },
-  title: { fontSize: 26, fontWeight: "bold", marginBottom: 6, textAlign: "center", color: "#222" },
-  subtitle: { fontSize: 14, color: "#444", marginBottom: 14, textAlign: "center" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
   input: {
     height: 46,
     borderRadius: 10,
@@ -135,31 +129,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.9)",
     borderWidth: 1,
     borderColor: "#ccc",
-    color: "#000",
   },
-  error: { color: "red", textAlign: "center", marginBottom: 8 },
   primaryBtn: {
     backgroundColor: "#764ba2",
     paddingVertical: 12,
     borderRadius: 10,
-    marginBottom: 14,
+    marginTop: 10,
   },
-  primaryText: { color: "#fff", textAlign: "center", fontWeight: "700", fontSize: 16 },
-  linkBtn: { marginTop: 12, alignItems: "center" },
+  primaryText: { color: "#fff", textAlign: "center", fontWeight: "700" },
+  linkBtn: { marginTop: 15, alignItems: "center" },
   link: { color: "#667eea", fontWeight: "700", textDecorationLine: "underline" },
-
-  // 📢 Ad Box
-  adBox: {
-    marginTop: 20,
-    width: "90%",
-    maxWidth: 400,
-    height: 60,
-    borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#999",
-  },
-  adText: { color: "#444", fontWeight: "600" },
 });

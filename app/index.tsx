@@ -6,142 +6,159 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
-  Platform,
-  Image,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
+import Toast from "react-native-toast-message";
+import { FontAwesome } from "@expo/vector-icons";
 
-const isWeb = Platform.OS === "web";
-const storage = {
-  getItem: async (k: string) =>
-    isWeb ? Promise.resolve(window.localStorage.getItem(k)) : AsyncStorage.getItem(k),
-  setItem: async (k: string, v: string) =>
-    isWeb ? Promise.resolve(window.localStorage.setItem(k, v)) : AsyncStorage.setItem(k, v),
-};
-
-export default function LoginScreen() {
+export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    setError(null);
-    setLoading(true);
+    if (!identifier || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Missing details",
+        text2: "Enter email/phone and password",
+      });
+      return;
+    }
 
-    setTimeout(async () => {
-      try {
-        const raw = await storage.getItem("user");
-        if (!raw) {
-          setError("No registered user found. Please register first.");
-          setLoading(false);
-          return;
-        }
-        const user = JSON.parse(raw);
-        if (user.email === email.trim().toLowerCase() && user.password === password) {
-          await storage.setItem("loggedIn", "true");
-          setLoading(false);
-          router.replace("/home");
-        } else {
-          setError("Invalid email or password.");
-          setLoading(false);
-        }
-      } catch {
-        setError("Something went wrong. Try again.");
-        setLoading(false);
-      }
-    }, 900);
-  };
-
-  const fakeSocialLogin = async (provider: string) => {
     setLoading(true);
-    setTimeout(async () => {
-      await storage.setItem("loggedIn", "true");
-      await storage.setItem("provider", provider);
+    const stored = await AsyncStorage.getItem("user");
+    setTimeout(() => {
       setLoading(false);
-      router.replace("/home");
-    }, 900);
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (
+          (identifier === user.identifier || identifier === user.username) &&
+          password === user.password
+        ) {
+          Toast.show({
+            type: "success",
+            text1: "Welcome back 👋",
+            text2: `Logged in as ${user.username}`,
+          });
+        
+          // ✅ FIX: push instead of replace + shorter delay
+          setTimeout(() => {
+            router.push("./home");
+          }, 1000);
+        
+        } else {
+          Toast.show({
+            type: "error",
+            text1: "Invalid credentials ❌",
+            text2: "Check your email/phone and password",
+          });
+        }
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "No account found",
+          text2: "Please register first",
+        });
+      }
+    }, 1000);
   };
 
-  const webBlurStyle = isWeb ? { backdropFilter: "blur(12px)" } : {};
+  const fakeSocialLogin = (provider: string) => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      Toast.show({
+        type: "success",
+        text1: `${provider} Login successful 🎉`,
+      });
+      setTimeout(() => router.replace("/home"), 1000);
+    }, 1200);
+  };
 
   return (
-    <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.gradient}>
+    <LinearGradient colors={["#667eea", "#764ba2"]} style={{ flex: 1 }}>
       <View style={styles.wrapper}>
-        <View style={[styles.card, webBlurStyle]}>
+        <View style={styles.card}>
           <Text style={styles.title}>Login</Text>
-          <Text style={styles.subtitle}>Sign in with your account</Text>
+          
 
           <TextInput
-            placeholder="Email"
-            placeholderTextColor="rgba(0,0,0,0.5)"
-            value={email}
-            onChangeText={setEmail}
+            placeholder="Email / Mobile"
+            placeholderTextColor="rgba(0,0,0,0.6)"
             style={styles.input}
-            autoCapitalize="none"
+            value={identifier}
+            onChangeText={setIdentifier}
           />
+
           <TextInput
             placeholder="Password"
-            placeholderTextColor="rgba(0,0,0,0.5)"
+            placeholderTextColor="rgba(0,0,0,0.6)"
+            style={styles.input}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={styles.input}
           />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          
 
           {loading ? (
-            <ActivityIndicator size="large" color="#333" style={{ marginVertical: 12 }} />
+            <ActivityIndicator size="large" color="#333" />
           ) : (
-            <>
-              <Pressable onPress={handleLogin} style={styles.primaryBtn}>
-                <Text style={styles.primaryText}>Login</Text>
-              </Pressable>
-
-              <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>OR</Text>
-                <View style={styles.divider} />
-              </View>
-
-              {/* Google */}
-              <Pressable
-                onPress={() => fakeSocialLogin("google")}
-                style={[styles.socialBtn, { backgroundColor: "#DB4437" }]}
-              >
-                <Image
-                  source={{ uri: "https://img.icons8.com/color/48/google-logo.png" }}
-                  style={styles.icon}
-                />
-                <Text style={styles.socialText}>Continue with Google</Text>
-              </Pressable>
-
-              {/* Facebook */}
-              <Pressable
-                onPress={() => fakeSocialLogin("facebook")}
-                style={[styles.socialBtn, { backgroundColor: "#1877F2" }]}
-              >
-                <Image
-                  source={{ uri: "https://img.icons8.com/fluency/48/facebook-new.png" }}
-                  style={styles.icon}
-                />
-                <Text style={styles.socialText}>Continue with Facebook</Text>
-              </Pressable>
-            </>
+            <Pressable onPress={handleLogin} style={styles.primaryBtn}>
+              <Text style={styles.primaryText}>Login</Text>
+            </Pressable>
           )}
 
-          <Pressable onPress={() => router.push("/register")} style={styles.linkBtn}>
-            <Text style={styles.link}>New user? Register here</Text>
-          </Pressable>
-        </View>
+{/* <Pressable
+  onPress={() => router.push("/home")}
+  style={{ marginTop: 20, padding: 10, backgroundColor: "red" }}
+>
+  <Text style={{ color: "#fff" }}>Go to Home (Test)</Text>
+</Pressable> */}
 
-        {/* 📢 Google Ads Placeholder */}
-        <View style={styles.adBox}>
-          <Text style={styles.adText}>[ Your Ad Here ]</Text>
+
+          {/* Forgot Password */}
+          <Pressable onPress={() => router.push("/forgot-password")} style={styles.forgotBtn}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </Pressable>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.line} />
+            <Text style={styles.orText}>or</Text>
+            <View style={styles.line} />
+          </View>
+
+          {/* Google */}
+          <Pressable
+            onPress={() => fakeSocialLogin("Google")}
+            style={[styles.socialBtn, { backgroundColor: "#fff" }]}
+          >
+            <FontAwesome name="google" size={20} color="#DB4437" />
+            <Text style={[styles.socialText, { color: "#DB4437" }]}>
+              Sign in with Google
+            </Text>
+          </Pressable>
+
+          {/* Facebook */}
+          <Pressable
+            onPress={() => fakeSocialLogin("Facebook")}
+            style={[styles.socialBtn, { backgroundColor: "#1877F2" }]}
+          >
+            <FontAwesome name="facebook" size={20} color="#fff" />
+            <Text style={[styles.socialText, { color: "#fff" }]}>
+              Sign in with Facebook
+            </Text>
+          </Pressable>
+
+          {/* Register Link */}
+          <Pressable onPress={() => router.replace("/register")} style={styles.linkBtn}>
+            <Text style={styles.link}>Not a user? Register</Text>
+          </Pressable>
         </View>
       </View>
     </LinearGradient>
@@ -149,7 +166,6 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
   wrapper: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   card: {
     width: "90%",
@@ -162,8 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  title: { fontSize: 26, fontWeight: "bold", marginBottom: 6, textAlign: "center", color: "#222" },
-  subtitle: { fontSize: 14, color: "#444", marginBottom: 14, textAlign: "center" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
   input: {
     height: 46,
     borderRadius: 10,
@@ -172,44 +187,29 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.9)",
     borderWidth: 1,
     borderColor: "#ccc",
-    color: "#000",
   },
-  error: { color: "red", textAlign: "center", marginBottom: 8 },
   primaryBtn: {
     backgroundColor: "#764ba2",
     paddingVertical: 12,
     borderRadius: 10,
-    marginBottom: 14,
+    marginVertical: 12,
   },
-  primaryText: { color: "#fff", textAlign: "center", fontWeight: "700", fontSize: 16 },
-  dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 12 },
-  divider: { flex: 1, height: 1, backgroundColor: "#aaa" },
-  dividerText: { marginHorizontal: 8, color: "#444" },
+  primaryText: { color: "#fff", textAlign: "center", fontWeight: "700" },
+  forgotBtn: { alignItems: "center", marginBottom: 15 },
+  forgotText: { color: "#667eea", fontWeight: "700", textDecorationLine: "underline" },
+  divider: { flexDirection: "row", alignItems: "center", marginVertical: 12 },
+  line: { flex: 1, height: 1, backgroundColor: "#aaa" },
+  orText: { marginHorizontal: 10, color: "#555", fontWeight: "600" },
   socialBtn: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
     borderRadius: 10,
-    marginBottom: 10,
-    paddingHorizontal: 12,
-  },
-  socialText: { color: "#fff", fontWeight: "700", marginLeft: 10 },
-  icon: { width: 22, height: 22 },
-  linkBtn: { marginTop: 12, alignItems: "center" },
-  link: { color: "#667eea", fontWeight: "700", textDecorationLine: "underline" },
-
-  // 📢 Ad Box
-  adBox: {
-    marginTop: 20,
-    width: "90%",
-    maxWidth: 400,
-    height: 60,
-    borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.1)",
+    marginVertical: 6,
     justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#999",
+    gap: 8,
   },
-  adText: { color: "#444", fontWeight: "600" },
+  socialText: { fontSize: 16, fontWeight: "600" },
+  linkBtn: { marginTop: 15, alignItems: "center" },
+  link: { color: "#667eea", fontWeight: "700", textDecorationLine: "underline" },
 });
