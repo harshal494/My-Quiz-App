@@ -1,6 +1,6 @@
 // app/screens/home.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,10 +14,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Image
-            source={require('../../assets/images/icon.png')}
-            style={styles.appIcon}
-          />
+          <Image source={require('../../assets/images/icon.png')} style={styles.appIcon} />
           <Text style={styles.appName}>LearnApp</Text>
         </View>
         <TouchableOpacity>
@@ -38,9 +35,7 @@ export default function HomeScreen() {
           <Text style={styles.cardSubtitle}>Earn XP, boost leaderboard, unlock badges</Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() =>
-              router.push({ pathname: '/screens/QuizScreen', params: { testType: 'quick' } })
-            }
+            onPress={() => router.push({ pathname: '/screens/QuizScreen', params: { testType: 'quick' } })}
           >
             <Text style={styles.buttonText}>Start Quick Test →</Text>
           </TouchableOpacity>
@@ -53,9 +48,7 @@ export default function HomeScreen() {
             <Text style={styles.cardSubtitle}>Basic questions, limited access</Text>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#34C759' }]}
-              onPress={() =>
-                router.push({ pathname: '/screens/QuizScreen', params: { testType: 'free' } })
-              }
+              onPress={() => router.push({ pathname: '/screens/QuizScreen', params: { testType: 'free' } })}
             >
               <Text style={styles.buttonText}>Start Free Test</Text>
             </TouchableOpacity>
@@ -67,7 +60,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#007AFF' }]}
               onPress={() =>
-                router.push({ pathname: '/screens/QuizScreen', params: { testType: 'premium' } })
+                Alert.alert('Premium', 'Premium tests will be available soon. Please use Free or Quick for now.')
               }
             >
               <Text style={styles.buttonText}>Start Premium Test</Text>
@@ -135,12 +128,7 @@ const styles = StyleSheet.create({
   halfCard: { flex: 1, marginHorizontal: 4 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
   cardSubtitle: { fontSize: 13, color: '#666', marginBottom: 10 },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
+  button: { backgroundColor: '#007AFF', padding: 10, borderRadius: 8, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: '600' },
   quoteBox: {
     marginVertical: 20,
