@@ -75,7 +75,7 @@ export default function Login() {
         type: "success",
         text1: `${provider} Login successful 🎉`,
       });
-      setTimeout(() => router.replace("/home"), 1000);
+      setTimeout(() => router.replace("/screens/home"), 1000);
     }, 1200);
   };
 

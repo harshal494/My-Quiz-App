@@ -5,138 +5,110 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from "react-native-toast-message";
+import { useUser } from "./context/UserContext";
 
-export default function Register() {
+export default function RegisterScreen() {
   const router = useRouter();
+  const { setUser } = useUser();
+
   const [username, setUsername] = useState("");
-  const [identifier, setIdentifier] = useState(""); // email or phone
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
-    if (!username || !identifier || !password || !confirm) {
-      Toast.show({
-        type: "error",
-        text1: "Missing fields",
-        text2: "Please fill all details",
+  const handleRegister = () => {
+    if (username && identifier && password) {
+      setUser({
+        username,
+        email: identifier.includes("@") ? identifier : undefined,
+        provider: "local",
       });
-      return;
+      router.push("/screens/home");
     }
-    if (password !== confirm) {
-      Toast.show({
-        type: "error",
-        text1: "Password mismatch",
-        text2: "Confirm password must match",
-      });
-      return;
-    }
-
-    setLoading(true);
-    setTimeout(async () => {
-      const user = { username, identifier, password };
-      await AsyncStorage.setItem("user", JSON.stringify(user));
-      setLoading(false);
-
-      Toast.show({
-        type: "success",
-        text1: "Registration successful 🎉",
-        text2: "Please login now",
-      });
-
-      setTimeout(() => router.replace("/"), 1000);
-    }, 1000);
   };
 
   return (
-    <LinearGradient colors={["#667eea", "#764ba2"]} style={{ flex: 1 }}>
-      <View style={styles.wrapper}>
+    <LinearGradient colors={["#00f2fe", "#4facfe"]} style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.inner}
+      >
         <View style={styles.card}>
           <Text style={styles.title}>Register</Text>
 
           <TextInput
             placeholder="Username"
-            placeholderTextColor="#444"
-            style={styles.input}
             value={username}
             onChangeText={setUsername}
-          />
-
-          <TextInput
-            placeholder="Email / Mobile"
-            placeholderTextColor="#444"
             style={styles.input}
+            placeholderTextColor="#aaa"
+          />
+          <TextInput
+            placeholder="Email or Mobile"
             value={identifier}
             onChangeText={setIdentifier}
+            style={styles.input}
+            placeholderTextColor="#aaa"
           />
-
           <TextInput
             placeholder="Password"
-            placeholderTextColor="#444"
-            style={styles.input}
-            secureTextEntry
             value={password}
             onChangeText={setPassword}
-          />
-
-          <TextInput
-            placeholder="Confirm Password"
-            placeholderTextColor="#444"
-            style={styles.input}
             secureTextEntry
-            value={confirm}
-            onChangeText={setConfirm}
+            style={styles.input}
+            placeholderTextColor="#aaa"
           />
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#333" />
-          ) : (
-            <Pressable onPress={handleRegister} style={styles.primaryBtn}>
-              <Text style={styles.primaryText}>Register</Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.button} onPress={handleRegister}>
+            <Text style={styles.buttonText}>Register</Text>
+          </Pressable>
 
-          <Pressable onPress={() => router.replace("/")} style={styles.linkBtn}>
-            <Text style={styles.link}>Already a user? Login</Text>
+          <Pressable onPress={() => router.push("/")}>
+            <Text style={styles.switchText}>
+              Already a user? <Text style={styles.switchLink}>Login</Text>
+            </Text>
           </Pressable>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  container: { flex: 1 },
+  inner: { flex: 1, justifyContent: "center", alignItems: "center" },
   card: {
-    width: "90%",
-    maxWidth: 400,
+    width: "85%",
+    padding: 20,
     backgroundColor: "rgba(255,255,255,0.75)",
-    padding: 25,
-    borderRadius: 18,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    backdropFilter: "blur(10px)",
   },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
+  title: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
   input: {
-    height: 46,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    backgroundColor: "rgba(255,255,255,0.9)",
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: "#fff",
   },
-  primaryBtn: {
-    backgroundColor: "#764ba2",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
+  button: {
+    backgroundColor: "#00c6ff",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 10,
   },
-  primaryText: { color: "#fff", textAlign: "center", fontWeight: "700" },
-  linkBtn: { marginTop: 15, alignItems: "center" },
-  link: { color: "#667eea", fontWeight: "700", textDecorationLine: "underline" },
+  buttonText: { color: "#fff", fontWeight: "bold" },
+  switchText: { textAlign: "center", marginTop: 10, color: "#333" },
+  switchLink: { color: "#00c6ff", fontWeight: "bold" },
 });
