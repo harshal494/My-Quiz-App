@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Replace with dynamic questions if needed.
 const questions = [
-  { id: 1, question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correct: '4' },
+  { id: 1, question: 'What is 2 + 2? Capital of France? Capital of France? Capital of France? Capital of France? Capital of France?', options: ['3', '4', '5', '6'], correct: '4' },
   { id: 2, question: 'Capital of France?', options: ['London', 'Berlin', 'Paris', 'Rome'], correct: 'Paris' },
   { id: 3, question: 'React is a ___ library?', options: ['UI', 'Database', 'Backend', 'OS'], correct: 'UI' },
 ];
